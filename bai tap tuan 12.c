@@ -79,6 +79,14 @@ void inOrder(struct Node* root) {
     }
 }
 
+// giai phong bo nho cua cay khi ket thuc chuong trinh
+void freeTree(struct Node* root) {
+    if (root != NULL) {
+        freeTree(root->left);
+        freeTree(root->right);
+        free(root);
+    }
+}
 
 int main(){
 
