@@ -15,3 +15,22 @@ struct Node* createNode(int value) {
     return newNode;
 }
 
+//  Hàm thêm nút vào cây 
+// Trái <= , Phải >
+struct Node* insert(struct Node* root, int value) {
+    // Nếu cây (hoặc nhánh) đang rỗng, tạo nút mới tại đây
+    if (root == NULL) {
+        return createNode(value);
+    }
+
+    // So sánh giá trị để phân nhánh
+    if (value <= root->namSinh) {
+        // Nếu giá trị nhỏ hơn hoặc bằng nút hiện tại -> Sang TRÁI
+        root->left = insert(root->left, value);
+    } else {
+        // Nếu giá trị lớn hơn nút hiện tại -> Sang PHẢI
+        root->right = insert(root->right, value);
+    }
+    return root;
+}
+
