@@ -70,6 +70,16 @@ bool searchBST(struct Node* root, int value, int step) {
     }
 }
 
+//ham duyet cay theo thu tu tang dan de kiem tra cau truc cay
+void inOrder(struct Node* root) {
+    if (root != NULL) {
+        inOrder(root->left);
+        printf("%d ", root->namSinh);
+        inOrder(root->right);
+    }
+}
+
+
 int main(){
 
 }
