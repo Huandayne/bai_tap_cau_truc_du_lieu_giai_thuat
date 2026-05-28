@@ -88,7 +88,7 @@ void freeTree(struct Node* root) {
     }
 }
 
-int main() {
+int main(){
     int danhSachNamSinh[] = {2001, 2002, 2006, 2007, 2003, 2004, 2005, 2001, 1999, 2004};
     int n = sizeof(danhSachNamSinh) / sizeof(danhSachNamSinh[0]);
 
