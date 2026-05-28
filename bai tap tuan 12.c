@@ -88,6 +88,34 @@ void freeTree(struct Node* root) {
     }
 }
 
-int main(){
+int main() {
+    int danhSachNamSinh[] = {2001, 2002, 2006, 2007, 2003, 2004, 2005, 2001, 1999, 2004};
+    int n = sizeof(danhSachNamSinh) / sizeof(danhSachNamSinh[0]);
 
+    struct Node* root = NULL;
+
+    // Bước 1 & Bước 2: Dựng cây nhị phân tìm kiếm từ dãy số
+    printf("--- 1. Dang dung cay BST tu day so --- \n");
+    for (int i = 0; i < n; i++) {
+        root = insert(root, danhSachNamSinh[i]);
+    }
+    printf("Dung cay thanh cong!\n\n");
+
+    // In thử cây theo thứ tự LNR để xác nhận xem các phần tử đã được sắp xếp chuẩn chưa
+    printf("Danh sach sau khi duyet cay (In-order LNR): ");
+    inOrder(root);
+    printf("\n\n");
+
+    // Bước 3: Tìm kiếm sinh viên sinh năm 2004
+    int target = 2004;
+    printf("--- 2. Tien hanh tim kiem sinh vien nam sinh %d ---\n", target);
+    bool ketQua = searchBST(root, target, 1);
+
+    if (!ketQua) {
+        printf("Khong co sinh vien nao sinh nam %d trong he thong.\n", target);
+    }
+
+    // Giải phóng bộ nhớ trước khi thoát
+    freeTree(root);
+    return 0;
 }
