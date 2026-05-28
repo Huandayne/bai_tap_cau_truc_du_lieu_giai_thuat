@@ -37,6 +37,39 @@ struct Node* insert(struct Node* root, int value) {
     return root;
 }
 
+// ham tim gia tri va in tien trinh tung buoc
+bool searchBST(struct Node* root, int value, int step) {
+    // Trường hợp gốc: Nhánh rỗng (không tìm thấy)
+    if (root == NULL) {
+        printf("-> Buoc %d: Gap cay trong (Khong tim thay %d)\n", step, value);
+        return false;
+    }
+
+    printf("-> Buoc %d: So sanh voi nut [%d]", step, root->namSinh);
+
+    // Trường hợp tìm thấy giá trị bằng nhau
+    if (value == root->namSinh) {
+        printf(" => Tim thay %d!\n", value);
+        
+        // Vì có dấu '<=' nên các phần tử trùng nhau (nếu có) sẽ nằm ở nhánh TRÁI
+        // Ta kiểm tra xem còn nút trùng nào ở ngay phía dưới không
+        if (root->left != NULL && root->left->namSinh == value) {
+            printf("   (Luu y: Co them sinh vien trung nam sinh o nhanh ben trai)\n");
+            searchBST(root->left, value, step + 1);
+        }
+        return true;
+    }
+
+    // Di chuyển tiếp dựa theo giá trị
+    if (value < root->namSinh) {
+        printf(" -> Di sang TRAI\n");
+        return searchBST(root->left, value, step + 1);
+    } else {
+        printf(" -> Di sang PHAI\n");
+        return searchBST(root->right, value, step + 1);
+    }
+}
+
 int main(){
 
 }
