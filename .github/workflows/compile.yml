@@ -1,4 +1,4 @@
-name: Compile All C Files and Push to Repo
+name: Compile All C and C++ Files and Push to Repo
 
 on: [push, workflow_dispatch]
 
@@ -14,15 +14,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Compile all C files
+      - name: Compile all C and C++ files
         shell: powershell
         run: |
-          Get-ChildItem -Filter *.c -Recurse | ForEach-Object {
+          # Quét cả file .c và .cpp trong toàn bộ thư mục (bao gồm cả thư mục con)
+          Get-ChildItem -Include *.c, *.cpp -Recurse | ForEach-Object {
               $name = $_.BaseName
-              gcc $_.FullName -o "$name.exe"
+              $ext = $_.Extension
+              
+              if ($ext -eq ".cpp") {
+                  # Nếu là file C++, dùng g++ để compile
+                  echo "Compiling C++ file: $_.Name"
+                  g++ $_.FullName -o "$name.exe"
+              } else {
+                  # Nếu là file C, dùng gcc để compile
+                  echo "Compiling C file: $_.Name"
+                  gcc $_.FullName -o "$name.exe"
+              }
           }
 
-      # Bước mới: Tự động gom các file .exe vừa tạo và commit thẳng vào repo
+      # Bước: Tự động gom các file .exe vừa tạo và commit thẳng vào repo
       - name: Commit and Push EXE files
         shell: bash
         run: |
@@ -36,6 +47,6 @@ jobs:
           if git diff-index --quiet HEAD; then
             echo "No changes to commit"
           else
-            git commit -m "Automated compile: Updated EXE files"
+            git commit -m "Automated compile: Updated EXE files (C/C++)"
             git push
           fi
