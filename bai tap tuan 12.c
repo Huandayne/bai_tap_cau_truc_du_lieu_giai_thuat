@@ -1,121 +1,155 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include <iostream>	 
 
-// 1. Định nghĩa cấu trúc của một nút (Node) trên cây
-struct Node {
-    int namSinh;
-    struct Node* left;
-    struct Node* right;
-};
+ 
 
-// Hàm tiện ích để tạo một nút mới
-struct Node* createNode(int value) {
-    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
-    newNode->namSinh = value;
-    newNode->left = NULL;
-    newNode->right = NULL;
-    return newNode;
-}
+using namespace std; 
 
-// ham them nut vao cay
-// Trái <= , Phải >
-struct Node* insert(struct Node* root, int value) {
-    // Nếu cây (hoặc nhánh) đang rỗng, tạo nút mới tại đây
-    if (root == NULL) {
-        return createNode(value);
-    }
+ 
 
-    // So sánh giá trị để phân nhánh
-    if (value <= root->namSinh) {
-        // Nếu giá trị nhỏ hơn hoặc bằng nút hiện tại -> Sang TRÁI
-        root->left = insert(root->left, value);
-    } else {
-        // Nếu giá trị lớn hơn nút hiện tại -> Sang PHẢI
-        root->right = insert(root->right, value);
-    }
-    return root;
-}
+void inMang(int A[], int n) { 
 
-// ham tim gia tri va in tien trinh tung buoc
-bool searchBST(struct Node* root, int value, int step) {
-    // Trường hợp gốc: Nhánh rỗng (không tìm thấy)
-    if (root == NULL) {
-        printf("-> Buoc %d: Gap cay trong (Khong tim thay %d)\n", step, value);
-        return false;
-    }
+    for (int i = 1; i <= n; i++) { 
 
-    printf("-> Buoc %d: So sanh voi nut [%d]", step, root->namSinh);
+        cout << A[i] << " "; 
 
-    // Trường hợp tìm thấy giá trị bằng nhau
-    if (value == root->namSinh) {
-        printf(" => Tim thay %d!\n", value);
-        
-        // Vì có dấu '<=' nên các phần tử trùng nhau (nếu có) sẽ nằm ở nhánh TRÁI
-        // Ta kiểm tra xem còn nút trùng nào ở ngay phía dưới không
-        if (root->left != NULL && root->left->namSinh == value) {
-            printf("   (Luu y: Co them sinh vien trung nam sinh o nhanh ben trai)\n");
-            searchBST(root->left, value, step + 1);
-        }
-        return true;
-    }
+    } 
 
-    // Di chuyển tiếp dựa theo giá trị
-    if (value < root->namSinh) {
-        printf(" -> Di sang TRAI\n");
-        return searchBST(root->left, value, step + 1);
-    } else {
-        printf(" -> Di sang PHAI\n");
-        return searchBST(root->right, value, step + 1);
-    }
-}
+    cout << "\n"; 
 
-//ham duyet cay theo thu tu tang dan de kiem tra cau truc cay
-void inOrder(struct Node* root) {
-    if (root != NULL) {
-        inOrder(root->left);
-        printf("%d ", root->namSinh);
-        inOrder(root->right);
-    }
-}
+} 
 
-// giai phong bo nho cua cay khi ket thuc chuong trinh
-void freeTree(struct Node* root) {
-    if (root != NULL) {
-        freeTree(root->left);
-        freeTree(root->right);
-        free(root);
-    }
-}
+ 
 
-int main(){
-    int danhSachNamSinh[] = {2001, 2002, 2006, 2007, 2003, 2004, 2005, 2001, 1999, 2004};
-    int n = sizeof(danhSachNamSinh) / sizeof(danhSachNamSinh[0]);
+void vunDongTaiNut(int A[], int n, int i) { 
 
-    struct Node* root = NULL;
+    int lonNhat = i; 
 
-    // Bước 1 & Bước 2: Dựng cây nhị phân tìm kiếm từ dãy số
-    printf("--- 1. Dang dung cay BST tu day so --- \n");
-    for (int i = 0; i < n; i++) {
-        root = insert(root, danhSachNamSinh[i]);
-    }
-    printf("Dung cay thanh cong!\n\n");
+    int conTrai = 2 * i; 
 
-    // In thử cây theo thứ tự LNR để xác nhận xem các phần tử đã được sắp xếp chuẩn chưa
-    printf("Danh sach sau khi duyet cay (In-order LNR): ");
-    inOrder(root);
-    printf("\n\n");
+    int conPhai = 2 * i + 1; 
 
-    // Bước 3: Tìm kiếm sinh viên sinh năm 2004
-    int target = 2004;
-    printf("--- 2. Tien hanh tim kiem sinh vien nam sinh %d ---\n", target);
-    bool ketQua = searchBST(root, target, 1);
+ 
 
-    if (!ketQua) {
-        printf("Khong co sinh vien nao sinh nam %d trong he thong.\n", target);
-    }
+    if (conTrai <= n && A[conTrai] > A[lonNhat]) { 
 
-    // Giải phóng bộ nhớ trước khi thoát
-    freeTree(root);
-    return 0;
-}
+        lonNhat = conTrai; 
+
+    } 
+
+ 
+
+    if (conPhai <= n && A[conPhai] > A[lonNhat]) { 
+
+        lonNhat = conPhai; 
+
+    } 
+
+ 
+
+    if (lonNhat != i) { 
+
+        swap(A[i], A[lonNhat]); 
+
+        vunDongTaiNut(A, n, lonNhat); 
+
+    } 
+
+} 
+
+ 
+
+void sapXepVunDong(int A[], int n) { 
+
+    cout << "--- BAT DAU VUN DONG ---\n"; 
+
+    for (int i = n / 2; i >= 1; i--) { 
+
+        vunDongTaiNut(A, n, i); 
+
+        cout << "Sau khi vun tai i = " << i << ": "; 
+
+        inMang(A, n); 
+
+    } 
+
+ 
+
+    cout << "\n--- BAT DAU SAP XEP ---\n"; 
+
+    int kichThuocHienTai = n; 
+
+    for (int i = n; i > 1; i--) { 
+
+        swap(A[1], A[i]); 
+
+        kichThuocHienTai--; 
+
+         
+
+        vunDongTaiNut(A, kichThuocHienTai, 1); 
+
+         
+
+        cout << "Buoc dua goc ve cuoi: "; 
+
+        inMang(A, n); 
+
+    } 
+
+} 
+
+ 
+
+int main() { 
+
+    int cay1[] = {0, 4, 1, 3, 2, 16, 9, 10, 14, 8, 7}; 
+
+    int soPhanTu1 = 10;  
+
+ 
+
+    cout << "================ CAY 1 ================\n"; 
+
+    cout << "Mang ban dau: "; 
+
+    inMang(cay1, soPhanTu1); 
+
+    cout << "---------------------------------------\n"; 
+
+    sapXepVunDong(cay1, soPhanTu1); 
+
+    cout << "Ket qua:      "; 
+
+    inMang(cay1, soPhanTu1); 
+
+     
+
+    cout << "\n\n"; 
+
+ 
+
+    int cay2[] = {0, 11, 54, 32, 106, 38, 78, 208, 16, 84, 17, 39, 15}; 
+
+    int soPhanTu2 = 12;  
+
+ 
+
+    cout << "================ CAY 2 ================\n"; 
+
+    cout << "Mang ban dau: "; 
+
+    inMang(cay2, soPhanTu2); 
+
+    cout << "---------------------------------------\n"; 
+
+    sapXepVunDong(cay2, soPhanTu2); 
+
+    cout << "Ket qua:      "; 
+
+    inMang(cay2, soPhanTu2); 
+
+ 
+
+    return 0; 
+
+} 
