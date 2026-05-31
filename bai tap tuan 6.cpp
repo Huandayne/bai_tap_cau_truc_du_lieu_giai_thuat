@@ -2,7 +2,6 @@
 #include <string>
 
 using namespace std;
-#toi bi ngu
 struct File {
     string name;
     double size;
