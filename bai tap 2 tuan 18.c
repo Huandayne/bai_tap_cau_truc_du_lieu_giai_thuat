@@ -43,3 +43,39 @@ void dijkstra(int V, int graph[MAX][MAX], int src, char* names[]) {
     }
 }
 
+// 2. THUẬT TOÁN PRIM
+void primMST(int V, int graph[MAX][MAX], char* names[]) {
+    int parent[MAX]; 
+    int key[MAX];    
+    bool inMST[MAX] = {false};
+
+    for (int i = 0; i < V; i++) {
+        key[i] = INF;
+        parent[i] = -1;
+    }
+
+    key[0] = 0; 
+
+    for (int count = 0; count < V - 1; count++) {
+        int min_key = INF, u = -1;
+        for (int v = 0; v < V; v++) {
+            if (!inMST[v] && key[v] < min_key) {
+                min_key = key[v];
+                u = v;
+            }
+        }
+
+        if (u == -1) break;
+        inMST[u] = true;
+
+        for (int v = 0; v < V; v++) {
+            if (graph[u][v] && !inMST[v] && graph[u][v] < key[v]) {
+                parent[v] = u;
+                key[v] = graph[u][v];
+            }
+        }
+    }
+
+    printf("\n=== KET QUA THUAT TOAN PRIM ===");
+    printMSTMatrix(V, parent, graph, names);
+}
