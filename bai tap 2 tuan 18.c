@@ -158,3 +158,62 @@ void printMSTMatrix(int V, int parent[], int graph[MAX][MAX], char* names[]) {
         printf("\n");
     }
 }
+
+
+int main() {
+    int V = 11; // 11 tỉnh thành
+    int graph[MAX][MAX] = {0};
+
+    // Định nghĩa ID cho từng đỉnh
+    char* names[] = {
+        "Ha Noi", "Hai Duong", "Hung Yen", "Phu Ly", "Hoa Binh", 
+        "Son Tay", "Thai Nguyen", "Bac Ninh", "Bac Giang", "Uong Bi", "Hai Phong"
+    };
+
+    // Khai báo các cạnh: {Đỉnh u, Đỉnh v, Trọng số = Giá trị số sau chữ D}
+    int sampleEdges[][3] = {
+        {0, 1, 1},   // D1: Ha Noi - Hai Duong (Trọng số = 1)
+        {1, 2, 2},   // D2: Hai Duong - Hung Yen (Trọng số = 2)
+        {3, 2, 3},   // D3: Phu Ly - Hung Yen (Trọng số = 3)
+        {0, 3, 4},   // D4: Ha Noi - Phu Ly (Trọng số = 4)
+        {0, 4, 5},   // D5: Ha Noi - Hoa Binh (Trọng số = 5)
+        {0, 5, 6},   // D6: Ha Noi - Son Tay (Trọng số = 6)
+        {0, 6, 7},   // D7: Ha Noi - Thai Nguyen (Trọng số = 7)
+        {0, 7, 8},   // D8: Ha Noi - Bac Ninh (Trọng số = 8)
+        {7, 8, 9},   // D9: Bac Ninh - Bac Giang (Trọng số = 9)
+        {8, 9, 10},  // D10: Bac Giang - Uong Bi (Trọng số = 10)
+        {7, 9, 11},  // D11: Bac Ninh - Uong Bi (Trọng số = 11)
+        {9, 10, 12}, // D12: Uong Bi - Hai Phong (Trọng số = 12)
+        {1, 10, 13}  // D13: Hai Duong - Hai Phong (Trọng số = 13)
+    };
+    int E = sizeof(sampleEdges) / sizeof(sampleEdges[0]);
+
+    Edge edgeList[MAX];
+
+    // Đổ dữ liệu vào ma trận kề gốc
+    for (int i = 0; i < E; i++) {
+        int u = sampleEdges[i][0];
+        int v = sampleEdges[i][1];
+        int w = sampleEdges[i][2];
+        
+        graph[u][v] = w;
+        graph[v][u] = w; 
+
+        edgeList[i].u = u;
+        edgeList[i].v = v;
+        edgeList[i].weight = w;
+    }
+
+    // 1. Chạy Dijkstra từ Hà Nội (ID = 0)
+    dijkstra(V, graph, 0, names);
+    printf("\n========================================================================\n");
+
+    // 2. Chạy thuật toán Prim để tìm và in cây khung nhỏ nhất
+    primMST(V, graph, names);
+    printf("\n========================================================================\n");
+
+    // 3. Chạy thuật toán Kruskal để kiểm chứng lại cây khung nhỏ nhất
+    kruskalMST(V, E, edgeList, graph, names);
+
+    return 0;
+}
