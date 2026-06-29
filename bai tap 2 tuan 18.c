@@ -123,3 +123,38 @@ void kruskalMST(int V, int E, Edge edges[], int graph[MAX][MAX], char* names[]) 
     printf("\n=== KET QUA THUAT TOAN KRUSKAL ===");
     printMSTMatrix(V, mstParent, graph, names);
 }
+
+
+
+// Hàm in ma trận kề của Cây Khung Nhỏ Nhất (MST) kèm tên tỉnh thành
+void printMSTMatrix(int V, int parent[], int graph[MAX][MAX], char* names[]) {
+    int mstMatrix[MAX][MAX] = {0};
+    int totalWeight = 0;
+
+    for (int i = 1; i < V; i++) {
+        if (parent[i] != -1) {
+            int u = parent[i];
+            int v = i;
+            int w = graph[u][v];
+            mstMatrix[u][v] = w;
+            mstMatrix[v][u] = w;
+            totalWeight += w;
+        }
+    }
+
+    printf("\nTong trong so cay khung (MST): %d\n", totalWeight);
+    printf("[Ma tran ke cua Cay Khung Nho Nhat (MST)]:\n");
+    
+    // In tiêu đề cột bằng ID số
+    printf("%-15s", "");
+    for (int i = 0; i < V; i++) printf("%5d", i);
+    printf("\n");
+
+    for (int i = 0; i < V; i++) {
+        printf("%-12s [%d] |", names[i], i);
+        for (int j = 0; j < V; j++) {
+            printf("%5d", mstMatrix[i][j]);
+        }
+        printf("\n");
+    }
+}
