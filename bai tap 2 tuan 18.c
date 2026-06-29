@@ -43,7 +43,7 @@ void printMSTMatrix(int V, int parent[], int graph[MAX][MAX], char* names[]) {
     }
 }
 
-/// 1. THUẬT TOÁN DIJKSTRA
+// 1. THUẬT TOÁN DIJKSTRA
 void dijkstra(int V, int graph[MAX][MAX], int src, char* names[]) {
     int dist[MAX];
     bool visited[MAX] = {false};
@@ -116,7 +116,7 @@ void primMST(int V, int graph[MAX][MAX], char* names[]) {
 }
 
 
-/ 3. THUẬT TOÁN KRUSKAL
+// 3. THUẬT TOÁN KRUSKAL
 int findRoot(int parent[], int i) {
     if (parent[i] == -1) return i;
     return findRoot(parent, parent[i]);
