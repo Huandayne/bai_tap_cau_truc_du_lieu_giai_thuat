@@ -79,3 +79,47 @@ void primMST(int V, int graph[MAX][MAX], char* names[]) {
     printf("\n=== KET QUA THUAT TOAN PRIM ===");
     printMSTMatrix(V, parent, graph, names);
 }
+
+
+/ 3. THUẬT TOÁN KRUSKAL
+int findRoot(int parent[], int i) {
+    if (parent[i] == -1) return i;
+    return findRoot(parent, parent[i]);
+}
+
+void kruskalMST(int V, int E, Edge edges[], int graph[MAX][MAX], char* names[]) {
+    // Sắp xếp các cạnh (Bubble Sort)
+    for (int i = 0; i < E - 1; i++) {
+        for (int j = 0; j < E - i - 1; j++) {
+            if (edges[j].weight > edges[j + 1].weight) {
+                Edge temp = edges[j];
+                edges[j] = edges[j + 1];
+                edges[j + 1] = temp;
+            }
+        }
+    }
+
+    int parentArray[MAX];
+    for (int i = 0; i < V; i++) parentArray[i] = -1;
+
+    int mstParent[MAX]; 
+    for (int i = 0; i < V; i++) mstParent[i] = -1;
+
+    int edgeCount = 0;
+    int i = 0;
+
+    while (edgeCount < V - 1 && i < E) {
+        Edge next_edge = edges[i++];
+        int x = findRoot(parentArray, next_edge.u);
+        int y = findRoot(parentArray, next_edge.v);
+
+        if (x != y) {
+            mstParent[next_edge.v] = next_edge.u; 
+            parentArray[x] = y; 
+            edgeCount++;
+        }
+    }
+
+    printf("\n=== KET QUA THUAT TOAN KRUSKAL ===");
+    printMSTMatrix(V, mstParent, graph, names);
+}
