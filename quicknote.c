@@ -2,214 +2,206 @@
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h>
-#include "sqlite3.h"
 
 #define MAX_TITLE 256
 #define MAX_CONTENT 1024
+#define DB_FILE "notes.dat"
+
+typedef struct {
+    int id;
+    char title[MAX_TITLE];
+    char content[MAX_CONTENT];
+} Note;
 
 // Bắn thông báo ra màn hình dạng hộp thoại Message Box của Windows
 void send_notification(const char *title, const char *body) {
-    // Chuyển UTF-8 sang UTF-16 (Wide Char) để hiển thị đúng tiếng Việt trong MessageBox
     wchar_t w_title[MAX_TITLE];
     wchar_t w_body[MAX_CONTENT];
 
     MultiByteToWideChar(CP_UTF8, 0, title, -1, w_title, MAX_TITLE);
     MultiByteToWideChar(CP_UTF8, 0, body, -1, w_body, MAX_CONTENT);
 
-    // MB_ICONINFORMATION | MB_TOPMOST: Hiện icon thông tin và luôn nổi lên trên các cửa sổ khác
     MessageBoxW(NULL, w_body, w_title, MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
-}
-
-// Khởi tạo bảng dữ liệu SQLite
-sqlite3* init_db() {
-    sqlite3 *db;
-    if (sqlite3_open("notes.db", &db) != SQLITE_OK) {
-        fprintf(stderr, "Lỗi mở cơ sở dữ liệu: %s\n", sqlite3_errmsg(db));
-        return NULL;
-    }
-
-    const char *sql = "CREATE TABLE IF NOT EXISTS notes ("
-                      "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                      "title TEXT NOT NULL, "
-                      "content TEXT NOT NULL);";
-    char *err_msg = NULL;
-    if (sqlite3_exec(db, sql, 0, 0, &err_msg) != SQLITE_OK) {
-        fprintf(stderr, "Lỗi tạo bảng: %s\n", err_msg);
-        sqlite3_free(err_msg);
-    }
-    return db;
 }
 
 void trim_newline(char *str) {
     size_t len = strlen(str);
     if (len > 0 && str[len - 1] == '\n') str[len - 1] = '\0';
-    if (len > 1 && str[len - 2] == '\r') str[len - 2] = '\0'; // Xóa ký tự \r của Windows
+    if (len > 1 && str[len - 2] == '\r') str[len - 2] = '\0';
 }
 
-// 1. Tạo ghi chú mới
-void add_note(sqlite3 *db) {
-    char title[MAX_TITLE];
-    char content[MAX_CONTENT];
+int get_next_id() {
+    FILE *f = fopen(DB_FILE, "rb");
+    if (!f) return 1;
+    Note n;
+    int max_id = 0;
+    while (fread(&n, sizeof(Note), 1, f)) {
+        if (n.id > max_id) max_id = n.id;
+    }
+    fclose(f);
+    return max_id + 1;
+}
 
-    printf("\n--- TẠO GHI CHÚ MỚI ---\n");
-    printf("Tiêu đề: ");
-    if (!fgets(title, sizeof(title), stdin)) return;
-    trim_newline(title);
+// 1. Thêm ghi chú
+void add_note() {
+    Note n;
+    printf("\n--- TAO GHI CHU MOI ---\n");
+    printf("Tieu de: ");
+    if (!fgets(n.title, sizeof(n.title), stdin)) return;
+    trim_newline(n.title);
 
-    if (strlen(title) == 0) {
-        printf("Tiêu đề không được để trống!\n");
+    if (strlen(n.title) == 0) {
+        printf("Tieu de khong duoc de trong!\n");
         return;
     }
 
-    printf("Nội dung: ");
-    if (!fgets(content, sizeof(content), stdin)) return;
-    trim_newline(content);
+    printf("Noi dung: ");
+    if (!fgets(n.content, sizeof(n.content), stdin)) return;
+    trim_newline(n.content);
 
-    const char *sql = "INSERT INTO notes (title, content) VALUES (?, ?);";
-    sqlite3_stmt *stmt;
+    n.id = get_next_id();
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
-        sqlite3_bind_text(stmt, 1, title, -1, SQLITE_STATIC);
-        sqlite3_bind_text(stmt, 2, content, -1, SQLITE_STATIC);
-
-        if (sqlite3_step(stmt) == SQLITE_DONE) {
-            printf("✓ Đã lưu thành công: '%s'\n", title);
-            send_notification("QuickNote - Thông báo", "Đã tạo ghi chú thành công!");
-        } else {
-            printf("Lỗi khi thêm ghi chú!\n");
-        }
+    FILE *f = fopen(DB_FILE, "ab");
+    if (!f) {
+        printf("Loi mo file du lieu!\n");
+        return;
     }
-    sqlite3_finalize(stmt);
+    fwrite(&n, sizeof(Note), 1, f);
+    fclose(f);
+
+    printf("✓ Da luu thanh cong ghi chu [ID: %d]: '%s'\n", n.id, n.title);
+    send_notification("QuickNote", "Da tao ghi chu moi thanh cong!");
 }
 
-// Liệt kê danh sách ghi chú
-int list_notes(sqlite3 *db) {
-    const char *sql = "SELECT id, title, content FROM notes ORDER BY id ASC;";
-    sqlite3_stmt *stmt;
-    int count = 0;
-
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
-        printf("\n--- DANH SÁCH GHI CHÚ ---\n");
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            count++;
-            int id = sqlite3_column_int(stmt, 0);
-            const unsigned char *title = sqlite3_column_text(stmt, 1);
-            const unsigned char *content = sqlite3_column_text(stmt, 2);
-
-            char preview[45];
-            strncpy(preview, (const char*)content, 40);
-            preview[40] = '\0';
-            if (strlen((const char*)content) > 40) {
-                strcat(preview, "...");
-            }
-
-            printf("[%d] %s - %s\n", id, title, preview);
-        }
-        printf("--------------------------\n");
+// Liệt kê ghi chú
+int list_notes() {
+    FILE *f = fopen(DB_FILE, "rb");
+    if (!f) {
+        printf("\nChua co ghi chu nao.\n");
+        return 0;
     }
-    sqlite3_finalize(stmt);
+
+    Note n;
+    int count = 0;
+    printf("\n--- DANH SACH GHI CHU ---\n");
+    while (fread(&n, sizeof(Note), 1, f)) {
+        count++;
+        char preview[45];
+        strncpy(preview, n.content, 40);
+        preview[40] = '\0';
+        if (strlen(n.content) > 40) strcat(preview, "...");
+        printf("[%d] %s - %s\n", n.id, n.title, preview);
+    }
+    fclose(f);
 
     if (count == 0) {
-        printf("Chưa có ghi chú nào.\n");
+        printf("Chua co ghi chu nao.\n");
+    } else {
+        printf("--------------------------\n");
     }
     return count;
 }
 
-// 2. Xem ghi chú và bắn thông báo hộp thoại
-void view_note(sqlite3 *db) {
-    if (list_notes(db) == 0) return;
+// 2. Xem ghi chú và bắn thông báo
+void view_note() {
+    if (list_notes() == 0) return;
 
-    printf("\nNhập ID ghi chú muốn xem: ");
+    printf("\nNhap ID ghi chu muon xem: ");
     char input[32];
     if (!fgets(input, sizeof(input), stdin)) return;
     int target_id = atoi(input);
 
-    const char *sql = "SELECT id, title, content FROM notes WHERE id = ?;";
-    sqlite3_stmt *stmt;
+    FILE *f = fopen(DB_FILE, "rb");
+    if (!f) return;
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
-        sqlite3_bind_int(stmt, 1, target_id);
-
-        if (sqlite3_step(stmt) == SQLITE_ROW) {
-            const unsigned char *title = sqlite3_column_text(stmt, 1);
-            const unsigned char *content = sqlite3_column_text(stmt, 2);
-
-            printf("\n=== [%d] %s ===\n", target_id, title);
-            printf("%s\n", content);
+    Note n;
+    int found = 0;
+    while (fread(&n, sizeof(Note), 1, f)) {
+        if (n.id == target_id) {
+            printf("\n=== [%d] %s ===\n", n.id, n.title);
+            printf("%s\n", n.content);
             printf("=======================\n");
-
-            // Bắn hộp thoại Windows nổi lên màn hình
-            send_notification((const char*)title, (const char*)content);
-        } else {
-            printf("Không tìm thấy ghi chú với ID đã nhập!\n");
+            send_notification(n.title, n.content);
+            found = 1;
+            break;
         }
     }
-    sqlite3_finalize(stmt);
+    fclose(f);
+
+    if (!found) {
+        printf("Khong tim thay ghi chu voi ID da nhap!\n");
+    }
 }
 
 // 3. Xóa ghi chú
-void delete_note(sqlite3 *db) {
-    if (list_notes(db) == 0) return;
+void delete_note() {
+    if (list_notes() == 0) return;
 
-    printf("\nNhập ID ghi chú muốn xóa: ");
+    printf("\nNhap ID ghi chu muon xoa: ");
     char input[32];
     if (!fgets(input, sizeof(input), stdin)) return;
     int target_id = atoi(input);
 
-    const char *sql = "DELETE FROM notes WHERE id = ?;";
-    sqlite3_stmt *stmt;
+    FILE *f = fopen(DB_FILE, "rb");
+    if (!f) return;
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
-        sqlite3_bind_int(stmt, 1, target_id);
+    FILE *temp = fopen("temp.dat", "wb");
+    if (!temp) {
+        fclose(f);
+        return;
+    }
 
-        if (sqlite3_step(stmt) == SQLITE_DONE) {
-            if (sqlite3_changes(db) > 0) {
-                printf("✓ Đã xóa thành công ghi chú ID: %d\n", target_id);
-                char notify_msg[64];
-                snprintf(notify_msg, sizeof(notify_msg), "Đã xóa thành công ghi chú ID #%d", target_id);
-                send_notification("QuickNote - Xóa ghi chú", notify_msg);
-            } else {
-                printf("Không tìm thấy ghi chú với ID đã nhập!\n");
-            }
+    Note n;
+    int found = 0;
+    while (fread(&n, sizeof(Note), 1, f)) {
+        if (n.id == target_id) {
+            found = 1;
+        } else {
+            fwrite(&n, sizeof(Note), 1, temp);
         }
     }
-    sqlite3_finalize(stmt);
+    fclose(f);
+    fclose(temp);
+
+    if (found) {
+        remove(DB_FILE);
+        rename("temp.dat", DB_FILE);
+        printf("✓ Da xoa thanh cong ghi chu ID: %d\n", target_id);
+        send_notification("QuickNote", "Da xoa ghi chu thanh cong!");
+    } else {
+        remove("temp.dat");
+        printf("Khong tim thay ghi chu voi ID da nhap!\n");
+    }
 }
 
 int main() {
-    // Thiết lập hiển thị UTF-8 trên Windows Command Prompt/PowerShell
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
-    sqlite3 *db = init_db();
-    if (!db) return 1;
-
     char choice[16];
     while (1) {
-        printf("\n=== QUẢN LÝ GHI CHÚ (Windows C) ===\n");
-        printf("1. Tạo ghi chú mới\n");
-        printf("2. Xem lại ghi chú (Bắn thông báo ra màn hình)\n");
-        printf("3. Xóa ghi chú\n");
-        printf("4. Thoát\n");
-        printf("Chọn thao tác (1-4): ");
+        printf("\n=== QUAN LY GHI CHU ===\n");
+        printf("1. Tao ghi chu moi\n");
+        printf("2. Xem lai ghi chu (Ban thong bao)\n");
+        printf("3. Xoa ghi chu\n");
+        printf("4. Thoat\n");
+        printf("Chon thao tac (1-4): ");
 
         if (!fgets(choice, sizeof(choice), stdin)) break;
         trim_newline(choice);
 
         if (strcmp(choice, "1") == 0) {
-            add_note(db);
+            add_note();
         } else if (strcmp(choice, "2") == 0) {
-            view_note(db);
+            view_note();
         } else if (strcmp(choice, "3") == 0) {
-            delete_note(db);
+            delete_note();
         } else if (strcmp(choice, "4") == 0) {
-            printf("Tạm biệt!\n");
+            printf("Tam biet!\n");
             break;
         } else {
-            printf("Lựa chọn không hợp lệ, vui lòng thử lại!\n");
+            printf("Lua chon khong hop le, vui long thu lai!\n");
         }
     }
-
-    sqlite3_close(db);
     return 0;
 }
